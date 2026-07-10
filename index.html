@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚禮報到 · 迎賓席次</title>
+<style>
+  :root{
+    --ink:#2b2320;--paper:#faf6ef;--card:#fffdf9;--line:#e6dccb;
+    --gold:#b08d4f;--gold-soft:#e9dcc0;--rose:#b5677a;--rose-soft:#f3e2e6;
+    --green:#5b8a72;--green-soft:#e0ede5;--muted:#9a8f80;
+    --shadow:0 1px 2px rgba(43,35,32,.04),0 8px 24px rgba(43,35,32,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 80px}
+  header{text-align:center;padding:32px 0 20px;position:relative}
+  .eyebrow{font-size:13px;letter-spacing:.4em;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+  h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(28px,5vw,42px);letter-spacing:.02em}
+  h1 .amp{color:var(--rose);font-style:italic;padding:0 .12em}
+  .subtitle{color:var(--muted);font-size:14px;margin-top:6px;letter-spacing:.15em}
+  .rule{width:60px;height:1px;background:var(--gold);margin:18px auto 0;position:relative}
+  .rule::before,.rule::after{content:"";position:absolute;top:-2px;width:5px;height:5px;background:var(--gold);border-radius:50%;transform:rotate(45deg)}
+  .rule::before{left:-10px}.rule::after{right:-10px}
+  .sync{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);margin-top:12px;padding:5px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card)}
+  .dot{width:7px;height:7px;border-radius:50%;background:#c7bda9}
+  .dot.on{background:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+  .dot.err{background:#c0655f;box-shadow:0 0 0 3px #f2dedc}
+  .dash{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;margin:14px 0 26px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+  .stat .label{font-size:12px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+  .stat .big{font-family:Georgia,serif;font-size:38px;line-height:1.1;margin-top:6px}
+  .stat .big small{font-size:16px;color:var(--muted)}
+  .progress{margin-top:14px;height:8px;background:var(--gold-soft);border-radius:99px;overflow:hidden}
+  .progress > div{height:100%;background:linear-gradient(90deg,var(--gold),var(--rose));border-radius:99px;transition:width .5s ease}
+  .stat .sub{font-size:12px;color:var(--muted);margin-top:8px}
+  .stat.rose .big{color:var(--rose)}
+  .stat.green .big{color:var(--green)}
+  .searchbar{position:relative;margin-bottom:8px}
+  .searchbar input{width:100%;padding:16px 18px 16px 46px;font-size:16px;font-family:inherit;background:var(--card);border:1px solid var(--line);border-radius:14px;color:var(--ink);box-shadow:var(--shadow);outline:none;transition:border-color .2s,box-shadow .2s}
+  .searchbar input:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+  .searchbar svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .hint{font-size:12px;color:var(--muted);margin:8px 2px 20px}
+  .results{display:flex;flex-direction:column;gap:10px}
+  .guest{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--shadow);transition:border-color .2s}
+  .guest.partial{background:#fbf4e6;border-color:var(--gold-soft)}
+  .guest.done{background:var(--green-soft);border-color:#cfe3d6}
+  .g-table{flex-shrink:0;width:46px;height:46px;border-radius:11px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:18px;font-weight:600}
+  .guest.done .g-table{background:#c6ddce;color:var(--green)}
+  .g-info{flex:1;min-width:0}
+  .g-name{font-size:17px;font-weight:600}
+  .g-meta{font-size:13px;color:var(--muted);margin-top:1px}
+  .g-meta .party{color:var(--rose);font-weight:600}
+  .g-dup{font-size:12px;color:#b26a00;font-weight:600;margin-top:1px}
+  .g-arrived{font-size:13px;margin-top:2px;font-weight:600}
+  .g-arrived .n{color:var(--green)}
+  /* 單人組:一顆按鈕 */
+  .g-action{flex-shrink:0;display:flex;align-items:center;gap:8px}
+  .btn{font-family:inherit;font-size:14px;font-weight:600;padding:10px 16px;border-radius:10px;border:none;cursor:pointer;transition:opacity .15s,transform .1s;white-space:nowrap}
+  .btn:active{transform:scale(.96)}
+  .btn:disabled{opacity:.5;cursor:wait}
+  .btn-checkin{background:var(--rose);color:#fff}
+  .btn-checkin:hover{opacity:.9}
+  .btn-undo{background:transparent;color:var(--green);border:1px solid #c6ddce}
+  .badge-done{display:inline-flex;align-items:center;gap:5px;color:var(--green);font-size:13px;font-weight:600}
+  /* 多人組:計數器 */
+  .counter{display:flex;align-items:center;gap:2px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .counter button{width:40px;height:42px;border:none;background:transparent;font-size:22px;font-weight:600;cursor:pointer;color:var(--gold);transition:background .12s;line-height:1}
+  .counter button:hover:not(:disabled){background:var(--gold-soft)}
+  .counter button:disabled{color:#d8cdb8;cursor:default}
+  .counter .cval{min-width:56px;text-align:center;font-family:Georgia,serif;font-size:18px;padding:0 2px}
+  .counter .cval b{color:var(--green)}
+  .btn-all{background:var(--rose);color:#fff;padding:10px 14px}
+  .empty{text-align:center;color:var(--muted);padding:40px 0;font-size:14px}
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;margin:38px 2px 16px}
+  .section-head h2{font-family:Georgia,serif;font-weight:400;font-size:22px}
+  .section-head .toggle{font-size:13px;color:var(--gold);cursor:pointer;user-select:none}
+  .tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .tcard{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;box-shadow:var(--shadow)}
+  .tcard .tno{font-family:Georgia,serif;font-size:15px;color:var(--gold);letter-spacing:.05em}
+  .tcard .tname{font-size:12px;color:var(--muted);margin-bottom:10px;min-height:1.2em}
+  .tcard .tcount{font-family:Georgia,serif;font-size:26px}
+  .tcard .tcount small{font-size:14px;color:var(--muted)}
+  .tbar{height:6px;background:var(--gold-soft);border-radius:99px;overflow:hidden;margin-top:8px}
+  .tbar > div{height:100%;background:var(--green);border-radius:99px;transition:width .5s}
+  .tcard.full{border-color:#cfe3d6;background:var(--green-soft)}
+  .roster-head{display:flex;align-items:center;justify-content:space-between;margin:38px 2px 0;cursor:pointer;user-select:none}
+  .roster-head h2{font-family:Georgia,serif;font-weight:400;font-size:22px}
+  .roster-head .chev{color:var(--gold);font-size:14px;transition:transform .2s}
+  .roster-head.open .chev{transform:rotate(180deg)}
+  .roster-body{margin-top:16px}
+  .roster-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .rfilter{font-family:inherit;font-size:13px;padding:7px 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer}
+  .rfilter.active{background:var(--gold-soft);color:#7a5c1e;border-color:var(--gold-soft);font-weight:600}
+  .roster-count{font-size:13px;color:var(--muted);margin-bottom:10px}
+  .rlist{display:flex;flex-direction:column;gap:6px}
+  .rrow{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border:1px solid var(--line);border-radius:10px;font-size:14px}
+  .rrow.done{background:var(--green-soft);border-color:#cfe3d6}
+  .rrow.partial{background:#fbf4e6;border-color:var(--gold-soft)}
+  .rrow .rt{flex-shrink:0;width:34px;height:34px;border-radius:8px;background:var(--gold-soft);color:var(--gold);display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;font-size:14px;font-weight:600}
+  .rrow.done .rt{background:#c6ddce;color:var(--green)}
+  .rrow .rn{flex:1;min-width:0;font-weight:600}
+  .rrow .rtn{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
+  .rrow .rstat{flex-shrink:0;font-size:13px;font-weight:600}
+  .rrow .rstat.s-none{color:var(--muted)}
+  .rrow .rstat.s-part{color:#b26a00}
+  .rrow .rstat.s-done{color:var(--green)}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:13px 22px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:50;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast b{color:var(--gold-soft)}
+  .setup{max-width:640px;margin:60px auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px;box-shadow:var(--shadow)}
+  .setup h2{font-family:Georgia,serif;font-weight:400;font-size:22px;margin-bottom:10px}
+  .setup p{font-size:14px;color:var(--muted);margin-bottom:8px}
+  .setup code{background:var(--gold-soft);padding:2px 6px;border-radius:5px;font-size:13px}
+  @media(max-width:640px){.dash{grid-template-columns:1fr 1fr;gap:10px}.stat.wide{grid-column:1/-1}.stat .big{font-size:32px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Wedding Check-in</div>
+    <h1>曹恂如 <span class="amp">&amp;</span> 廖尚諄</h1>
+    <div class="subtitle">歡 迎 蒞 臨 · 貴 賓 報 到</div>
+    <div class="rule"></div>
+    <div class="sync"><span class="dot" id="syncDot"></span><span id="syncText">連線中…</span></div>
+  </header>
+
+  <div id="app" style="display:none">
+    <div class="dash">
+      <div class="stat wide">
+        <div class="label">總報到率</div>
+        <div class="big"><span id="statRate">0</span><small>%</small></div>
+        <div class="progress"><div id="rateBar" style="width:0%"></div></div>
+        <div class="sub"><span id="statHeads">0</span> / <span id="statTotalHeads">0</span> 位賓客已入座</div>
+      </div>
+      <div class="stat rose">
+        <div class="label">已報到組數</div>
+        <div class="big"><span id="statParties">0</span><small>/<span id="statTotalParties">0</span></small></div>
+        <div class="sub">組(含部分到)</div>
+      </div>
+      <div class="stat green">
+        <div class="label">已滿桌數</div>
+        <div class="big"><span id="statFull">0</span><small>/<span id="statTables">0</span></small></div>
+        <div class="sub">桌次到齊</div>
+      </div>
+    </div>
+
+    <div class="searchbar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="text" placeholder="輸入賓客姓名或桌號搜尋…" autocomplete="off">
+    </div>
+    <div class="hint">輸入姓名或桌號即可找到賓客報到（名單預設隱藏以保護隱私）。同組請由一人代表報到；多人組可用 +／− 登記實際到場人數（例如 3 人先到 2 人）。</div>
+
+    <div class="results" id="results"></div>
+
+    <div class="section-head">
+      <h2>各桌實時人數</h2>
+      <span class="toggle" id="toggleFull">只看未滿桌</span>
+    </div>
+    <div class="tables" id="tables"></div>
+
+    <div class="roster-head" id="rosterHead">
+      <h2>全部賓客名單</h2>
+      <span class="chev">▼ 展開檢查</span>
+    </div>
+    <div class="roster-body" id="rosterBody" style="display:none">
+      <div class="roster-filters">
+        <button class="rfilter active" data-rf="none">未到</button>
+        <button class="rfilter" data-rf="done">已到</button>
+        <button class="rfilter" data-rf="all">全部</button>
+      </div>
+      <div class="roster-count" id="rosterCount"></div>
+      <div class="rlist" id="rosterList"></div>
+    </div>
+
+  </div>
+
+  <div class="setup" id="setup" style="display:none">
+    <h2>尚未設定雲端連線</h2>
+    <p>請開啟此 HTML 檔，找到最上方 <code>SUPABASE_URL</code> 與 <code>SUPABASE_KEY</code> 兩行，填入你的 Supabase 專案資訊後再上傳。</p>
+    <p>詳細步驟請看隨附的「部署說明」。</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+//  ① 填入你的 Supabase 專案資訊
+// ═══════════════════════════════════════════════════════
+const SUPABASE_URL = "https://hlvlqxgovczugqbvuiyr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ges2tsX_j9PHr-LJmSm9wg_iKiOePQT";
+
+// ═══════════════════════════════════════════════════════
+//  ② 賓客名單（自動由座位表產生）
+//     party = 該組人數；重複名字已合併為同一組
+// ═══════════════════════════════════════════════════════
+const GUESTS = [
+  {name:"曹秉睿", table:1, tableName:"主桌", party:1},
+  {name:"胡麗芬", table:1, tableName:"主桌", party:1},
+  {name:"胡權", table:1, tableName:"主桌", party:1},
+  {name:"林瑟芬", table:1, tableName:"主桌", party:1},
+  {name:"曹恂如", table:1, tableName:"主桌", party:1},
+  {name:"賴怡珊", table:1, tableName:"主桌", party:1},
+  {name:"廖", table:1, tableName:"主桌", party:1},
+  {name:"廖林瑞璧", table:1, tableName:"主桌", party:1},
+  {name:"廖君毅", table:1, tableName:"主桌", party:1},
+  {name:"廖尚諄", table:1, tableName:"主桌", party:1},
+  {name:"永和姨嬤(謝余日娥)", table:2, tableName:"女方親友", party:2},
+  {name:"后里舅公", table:2, tableName:"女方親友", party:1},
+  {name:"余金龍(小舅公)", table:2, tableName:"女方親友", party:1},
+  {name:"屏東姨嬤(余錢)", table:2, tableName:"女方親友", party:1},
+  {name:"吳嘉惠", table:2, tableName:"女方親友", party:1},
+  {name:"黃進生", table:2, tableName:"女方親友", party:2},
+  {name:"曹令怡", table:2, tableName:"女方親友", party:1},
+  {name:"方國誠", table:2, tableName:"女方親友", party:1},
+  {name:"胡月秋", table:3, tableName:"姓胡一家人", party:1},
+  {name:"張杏敏", table:3, tableName:"姓胡一家人", party:2},
+  {name:"張文瑞", table:3, tableName:"姓胡一家人", party:4},
+  {name:"胡權", table:3, tableName:"姓胡一家人", party:2},
+  {name:"胡月李", table:3, tableName:"姓胡一家人", party:1},
+  {name:"張文祥", table:5, tableName:"姓胡一家人", party:4},
+  {name:"胡麗淑", table:5, tableName:"姓胡一家人", party:3},
+  {name:"胡麗玉", table:5, tableName:"姓胡一家人", party:3},
+  {name:"李政澤", table:6, tableName:"女方媽媽朋友", party:2},
+  {name:"黃佩玉", table:6, tableName:"女方媽媽朋友", party:2},
+  {name:"賴美惠", table:6, tableName:"女方媽媽朋友", party:1},
+  {name:"徐嵐", table:6, tableName:"女方媽媽朋友", party:1},
+  {name:"彭美慧", table:6, tableName:"女方媽媽朋友", party:2},
+  {name:"孫夢霞", table:6, tableName:"女方媽媽朋友", party:1},
+  {name:"陳穎潔", table:6, tableName:"女方媽媽朋友", party:1},
+  {name:"楊聯財", table:7, tableName:"女方爸爸朋友", party:2},
+  {name:"徐永義", table:7, tableName:"女方爸爸朋友", party:2},
+  {name:"吳怡樂", table:7, tableName:"女方爸爸朋友", party:2},
+  {name:"邱豐順", table:7, tableName:"女方爸爸朋友", party:2},
+  {name:"李美玲", table:7, tableName:"女方爸爸朋友", party:1},
+  {name:"孫丕昌", table:7, tableName:"女方爸爸朋友", party:1},
+  {name:"林貞錄", table:8, tableName:"女方爸爸朋友", party:2},
+  {name:"劉導清", table:8, tableName:"女方爸爸朋友", party:2},
+  {name:"林子翔", table:8, tableName:"女方爸爸朋友", party:2},
+  {name:"邱瑞章", table:8, tableName:"女方爸爸朋友", party:2},
+  {name:"陳冠臺", table:8, tableName:"女方爸爸朋友", party:2},
+  {name:"仰崇仁", table:9, tableName:"女方爸爸朋友", party:2},
+  {name:"林孟劼", table:9, tableName:"女方爸爸朋友", party:2},
+  {name:"張國賢", table:9, tableName:"女方爸爸朋友", party:2},
+  {name:"蔡宏榮", table:9, tableName:"女方爸爸朋友", party:1},
+  {name:"吳坤泰", table:9, tableName:"女方爸爸朋友", party:1},
+  {name:"陳志榮", table:9, tableName:"女方爸爸朋友", party:1},
+  {name:"游進俊", table:10, tableName:"女方爸爸朋友", party:2},
+  {name:"黃建勛", table:10, tableName:"女方爸爸朋友", party:1},
+  {name:"郭昭忠", table:10, tableName:"女方爸爸朋友", party:1},
+  {name:"王康", table:10, tableName:"女方爸爸朋友", party:4},
+  {name:"莊學誠", table:10, tableName:"女方爸爸朋友", party:1},
+  {name:"黃淑芬", table:10, tableName:"女方爸爸朋友", party:1},
+  {name:"陳立人", table:11, tableName:"女方爸爸同事", party:1},
+  {name:"蘇筱婷", table:11, tableName:"女方爸爸同事", party:1},
+  {name:"郭中流", table:11, tableName:"女方爸爸同事", party:1},
+  {name:"王瀚", table:11, tableName:"女方爸爸同事", party:2},
+  {name:"Sophorn Chea", table:11, tableName:"女方爸爸同事", party:1},
+  {name:"莊明華", table:11, tableName:"女方爸爸同事", party:1},
+  {name:"鄭宏毅", table:11, tableName:"女方爸爸同事", party:1},
+  {name:"柯品聰", table:11, tableName:"女方爸爸同事", party:2},
+  {name:"Lisa", table:12, tableName:"HE-1", party:1},
+  {name:"Emma", table:12, tableName:"HE-1", party:1},
+  {name:"Kai", table:12, tableName:"HE-1", party:1},
+  {name:"William", table:12, tableName:"HE-1", party:1},
+  {name:"Bret", table:12, tableName:"HE-1", party:1},
+  {name:"Kyle", table:12, tableName:"HE-1", party:1},
+  {name:"Harry", table:12, tableName:"HE-1", party:1},
+  {name:"Matthew", table:12, tableName:"HE-1", party:1},
+  {name:"Jefferson", table:12, tableName:"HE-1", party:1},
+  {name:"Urania", table:13, tableName:"HE-2", party:3},
+  {name:"Alfa", table:13, tableName:"HE-2", party:3},
+  {name:"Ring", table:13, tableName:"HE-2", party:3},
+  {name:"Wenita", table:13, tableName:"HE-2", party:1},
+  {name:"Bruce", table:14, tableName:"HE-3", party:2},
+  {name:"Sam", table:14, tableName:"HE-3", party:1},
+  {name:"Kelly", table:14, tableName:"HE-3", party:2},
+  {name:"Joe", table:14, tableName:"HE-3", party:3},
+  {name:"Murphy", table:14, tableName:"HE-3", party:1},
+  {name:"Noah", table:14, tableName:"HE-3", party:1},
+  {name:"Ren", table:15, tableName:"HE-4", party:2},
+  {name:"Casper", table:15, tableName:"HE-4", party:2},
+  {name:"Frank", table:15, tableName:"HE-4", party:1},
+  {name:"Brandy", table:15, tableName:"HE-4", party:1},
+  {name:"Leo", table:15, tableName:"HE-4", party:1},
+  {name:"Rex", table:15, tableName:"HE-4", party:2},
+  {name:"Trevis", table:15, tableName:"HE-4", party:1},
+  {name:"曾立瑜", table:16, tableName:"中興學弟妹", party:1},
+  {name:"彭俊穎", table:16, tableName:"中興學弟妹", party:1},
+  {name:"陳家宏", table:16, tableName:"中興學弟妹", party:1},
+  {name:"吳世瑜", table:16, tableName:"中興學弟妹", party:1},
+  {name:"林耕右", table:16, tableName:"中興學弟妹", party:1},
+  {name:"黃婕涵", table:16, tableName:"中興學弟妹", party:1},
+  {name:"陳旻", table:16, tableName:"中興學弟妹", party:1},
+  {name:"吳星毅", table:16, tableName:"中興學弟妹", party:1},
+  {name:"萬子婷", table:16, tableName:"中興學弟妹", party:1},
+  {name:"施至遠", table:17, tableName:"中興學弟妹", party:1},
+  {name:"呂宗奕", table:17, tableName:"中興學弟妹", party:1},
+  {name:"謝士桓", table:17, tableName:"中興學弟妹", party:1},
+  {name:"汪振平", table:17, tableName:"中興學弟妹", party:1},
+  {name:"胡木", table:17, tableName:"中興學弟妹", party:1},
+  {name:"詹譯掄", table:17, tableName:"中興學弟妹", party:1},
+  {name:"潘泓斌", table:17, tableName:"中興學弟妹", party:1},
+  {name:"張育誠", table:17, tableName:"中興學弟妹", party:1},
+  {name:"陳泓碩", table:18, tableName:"中興寶貝", party:1},
+  {name:"黃悅榕", table:18, tableName:"中興寶貝", party:1},
+  {name:"劉子熙", table:18, tableName:"中興寶貝", party:1},
+  {name:"趙冠程", table:18, tableName:"中興寶貝", party:1},
+  {name:"孫碩靖", table:18, tableName:"中興寶貝", party:1},
+  {name:"胡秀芸", table:18, tableName:"中興寶貝", party:1},
+  {name:"穆宣奕", table:18, tableName:"中興寶貝", party:1},
+  {name:"陳佩伶", table:18, tableName:"中興寶貝", party:1},
+  {name:"余承軒", table:18, tableName:"中興寶貝", party:1},
+  {name:"張僥書", table:18, tableName:"中興寶貝", party:1},
+  {name:"鍾庭光", table:19, tableName:"中興寶貝", party:2},
+  {name:"詹士霆", table:19, tableName:"中興寶貝", party:1},
+  {name:"蔡欣蓉", table:19, tableName:"中興寶貝", party:1},
+  {name:"吳冠穎", table:19, tableName:"中興寶貝", party:1},
+  {name:"林冠甫", table:19, tableName:"中興寶貝", party:1},
+  {name:"馬祥瑋", table:19, tableName:"中興寶貝", party:1},
+  {name:"王柏淮", table:19, tableName:"中興寶貝", party:1},
+  {name:"江冀亞", table:19, tableName:"中興寶貝", party:1},
+  {name:"劉子嫺", table:19, tableName:"中興寶貝", party:1},
+  {name:"廖紹棠", table:20, tableName:"我也不知道叫什麼", party:1},
+  {name:"蕭子琳", table:20, tableName:"我也不知道叫什麼", party:2},
+  {name:"姜瑞妍", table:20, tableName:"我也不知道叫什麼", party:2},
+  {name:"莊琍婷", table:20, tableName:"我也不知道叫什麼", party:4},
+  {name:"莊子瑩", table:21, tableName:"女方親友", party:2},
+  {name:"張文馨", table:21, tableName:"女方親友", party:1},
+  {name:"呂沛芸", table:21, tableName:"女方親友", party:1},
+  {name:"陳佩伶", table:21, tableName:"女方親友", party:1},
+  {name:"劉乙彤", table:21, tableName:"女方親友", party:1},
+  {name:"林霈昀", table:21, tableName:"女方親友", party:1},
+  {name:"Javier", table:21, tableName:"女方親友", party:2},
+  {name:"王靖婷", table:22, tableName:"正妹學霸群", party:2},
+  {name:"楊梅郁", table:22, tableName:"正妹學霸群", party:1},
+  {name:"陳曉萱", table:22, tableName:"正妹學霸群", party:1},
+  {name:"葛艾", table:22, tableName:"正妹學霸群", party:1},
+  {name:"葛虹", table:22, tableName:"正妹學霸群", party:1},
+  {name:"賴妍安", table:22, tableName:"正妹學霸群", party:2},
+  {name:"葉姝儀", table:22, tableName:"正妹學霸群", party:2},
+  {name:"曹侃若", table:23, tableName:"女方家人", party:6},
+  {name:"姑姑", table:23, tableName:"女方家人", party:1},
+  {name:"Maya", table:23, tableName:"女方家人", party:1},
+  {name:"Johnathon", table:23, tableName:"女方家人", party:1},
+  {name:"王春洋", table:24, tableName:"女方親友", party:7},
+  {name:"鄭泊聲", table:24, tableName:"女方親友", party:1},
+  {name:"林慈慧", table:24, tableName:"女方親友", party:1},
+  {name:"廖家悅", table:25, tableName:"男方親友", party:1},
+  {name:"林宥淳", table:25, tableName:"男方親友", party:1},
+  {name:"廖舒怡", table:25, tableName:"男方親友", party:1},
+  {name:"賴姿彣", table:25, tableName:"男方親友", party:2},
+  {name:"張泰泓", table:25, tableName:"男方親友", party:2},
+  {name:"林瑞錦(二姨婆)", table:25, tableName:"男方親友", party:3},
+  {name:"林瑞雲(三姨婆)", table:26, tableName:"男方親友", party:4},
+  {name:"林淑婉(四姨婆)", table:26, tableName:"男方親友", party:2},
+  {name:"林淑芬(五姨婆)", table:26, tableName:"男方親友", party:1},
+  {name:"林俊龍(舅公)", table:26, tableName:"男方親友", party:1},
+  {name:"廖繼元", table:26, tableName:"男方親友", party:2},
+  {name:"廖秋子", table:27, tableName:"男方親友", party:2},
+  {name:"廖清子", table:27, tableName:"男方親友", party:2},
+  {name:"支致學", table:27, tableName:"男方親友", party:6},
+  {name:"劉余鳳玉", table:28, tableName:"男方親友", party:7},
+  {name:"劉志強", table:28, tableName:"男方親友", party:3},
+  {name:"廖清豊", table:29, tableName:"男方親友", party:2},
+  {name:"石旺根", table:29, tableName:"男方親友", party:2},
+  {name:"張火土", table:29, tableName:"男方親友", party:2},
+  {name:"翁金釵", table:29, tableName:"男方親友", party:1},
+  {name:"簡振豐", table:29, tableName:"男方親友", party:1},
+  {name:"林崇超", table:29, tableName:"男方親友", party:2},
+  {name:"李翊安", table:30, tableName:"男方親友", party:2},
+  {name:"林廣治", table:30, tableName:"男方親友", party:1},
+  {name:"段晧偉", table:30, tableName:"男方親友", party:2},
+  {name:"余武蔚", table:30, tableName:"男方親友", party:1},
+  {name:"周沛澤", table:30, tableName:"男方親友", party:1},
+  {name:"徐康勝", table:30, tableName:"男方親友", party:2},
+  {name:"林聖翔", table:30, tableName:"男方親友", party:1},
+  {name:"賴正敏", table:31, tableName:"男方親友", party:5},
+  {name:"賴姿吟", table:31, tableName:"男方親友", party:4},
+  {name:"賴昱成", table:31, tableName:"男方親友", party:1},
+  {name:"耿國翰", table:32, tableName:"竹林好朋友", party:1},
+  {name:"張兆文", table:32, tableName:"竹林好朋友", party:1},
+  {name:"高維緒", table:32, tableName:"竹林好朋友", party:1},
+  {name:"楊登傑", table:32, tableName:"竹林好朋友", party:1},
+  {name:"趙世勛", table:32, tableName:"竹林好朋友", party:1},
+  {name:"游子毅", table:32, tableName:"竹林好朋友", party:1},
+  {name:"邱佳頎", table:32, tableName:"竹林好朋友", party:1},
+  {name:"高先誼", table:32, tableName:"竹林好朋友", party:1},
+  {name:"鄭力豪", table:33, tableName:"竹林好朋友", party:1},
+  {name:"傅昱達", table:33, tableName:"竹林好朋友", party:1},
+  {name:"曹雅玲", table:33, tableName:"竹林好朋友", party:1},
+  {name:"林汶萱", table:33, tableName:"竹林好朋友", party:1},
+  {name:"陳彥廷", table:33, tableName:"竹林好朋友", party:1},
+  {name:"程浩崴", table:33, tableName:"竹林好朋友", party:1},
+  {name:"程文男", table:33, tableName:"竹林好朋友", party:2},
+  {name:"余遠添", table:34, tableName:"男方媽媽親友", party:1},
+  {name:"彭繼傳", table:34, tableName:"男方媽媽親友", party:1},
+  {name:"魏國樑", table:34, tableName:"男方媽媽親友", party:1},
+  {name:"應家淇", table:34, tableName:"男方媽媽親友", party:1},
+  {name:"曾憲誠", table:34, tableName:"男方媽媽親友", party:2},
+  {name:"曾正陽", table:34, tableName:"男方媽媽親友", party:3},
+  {name:"紀長志", table:35, tableName:"男方媽媽親友", party:1},
+  {name:"周世玲", table:35, tableName:"男方媽媽親友", party:2},
+  {name:"翁貴源", table:35, tableName:"男方媽媽親友", party:2},
+  {name:"陳菁菁", table:35, tableName:"男方媽媽親友", party:1},
+  {name:"楊仁惠", table:35, tableName:"男方媽媽親友", party:1},
+  {name:"彭韻悠", table:35, tableName:"男方媽媽親友", party:1},
+  {name:"俞瑞祥", table:35, tableName:"男方媽媽親友", party:1},
+  {name:"李錦皇", table:35, tableName:"男方媽媽親友", party:1},
+  {name:"曾玲薰", table:36, tableName:"男方媽媽親友", party:1},
+  {name:"黃芮妮", table:36, tableName:"男方媽媽親友", party:2},
+  {name:"黃婕依", table:36, tableName:"男方媽媽親友", party:1},
+  {name:"邱郁婷", table:36, tableName:"男方媽媽親友", party:1},
+  {name:"陳光國", table:36, tableName:"男方媽媽親友", party:1},
+  {name:"郭品為", table:36, tableName:"男方媽媽親友", party:1},
+  {name:"賴青蘭", table:36, tableName:"男方媽媽親友", party:1},
+  {name:"賴明煌", table:36, tableName:"男方媽媽親友", party:2},
+  {name:"張育誠", table:37, tableName:"福林宮", party:2},
+  {name:"謝金枝", table:37, tableName:"福林宮", party:1},
+  {name:"盧文池", table:37, tableName:"福林宮", party:1},
+  {name:"黃仁老", table:37, tableName:"福林宮", party:1},
+  {name:"蘇語瑄", table:37, tableName:"福林宮", party:2},
+  {name:"柯燕輝", table:37, tableName:"福林宮", party:2},
+  {name:"曾云辰", table:37, tableName:"福林宮", party:1},
+  {name:"郭鎧霆", table:38, tableName:"台大機械所", party:1},
+  {name:"沈昱伶", table:38, tableName:"台大機械所", party:1},
+  {name:"謝祥囿", table:38, tableName:"台大機械所", party:1},
+  {name:"伍宸緯", table:38, tableName:"台大機械所", party:1},
+  {name:"陳暐叡", table:38, tableName:"台大機械所", party:1},
+  {name:"盧楠佑", table:38, tableName:"台大機械所", party:1},
+  {name:"葉謙", table:38, tableName:"台大機械所", party:2},
+  {name:"許恩愷", table:38, tableName:"台大機械所", party:2},
+  {name:"江元宏", table:39, tableName:"逢甲航太", party:2},
+  {name:"馬家驎", table:39, tableName:"逢甲航太", party:1},
+  {name:"蔡宏宗", table:39, tableName:"逢甲航太", party:1},
+  {name:"李紀磊", table:39, tableName:"逢甲航太", party:2},
+  {name:"林彥寬", table:39, tableName:"逢甲航太", party:1},
+  {name:"洪偉智", table:39, tableName:"逢甲航太", party:1},
+  {name:"許晉瑄", table:39, tableName:"逢甲航太", party:2},
+];
+// ═══════════════════════════════════════════════════════
+
+const $ = s=>document.querySelector(s);
+const results=$("#results"), tablesEl=$("#tables"), toast=$("#toast");
+const syncDot=$("#syncDot"), syncText=$("#syncText");
+
+// 每組唯一 key
+GUESTS.forEach((g,i)=>{ g.key = g.table+"|"+g.name+"|"+i; });
+// 自動偵測跨桌同名:某姓名若出現在超過一桌,標記為同名需確認
+(function(){
+  const tablesByName = {};
+  GUESTS.forEach(g=>{ (tablesByName[g.name]=tablesByName[g.name]||new Set()).add(g.table); });
+  GUESTS.forEach(g=>{ g.dupName = tablesByName[g.name].size > 1; });
+})();
+
+let arrived = {};   // key -> 已到人數(整數)
+let showOnlyUnfull=false, query="", sb=null;
+let rosterOpen=false, rosterFilter="none";
+
+if(SUPABASE_URL.startsWith("貼上")||SUPABASE_KEY.startsWith("貼上")){
+  $("#setup").style.display="block"; syncText.textContent="未設定";
+}else{
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  $("#app").style.display="block";
+  init();
+}
+
+async function init(){
+  try{
+    const {data,error}=await sb.from("checkins").select("guest_key,arrived");
+    if(error) throw error;
+    (data||[]).forEach(r=>{ arrived[r.guest_key]=r.arrived; });
+    setSync("on","即時同步中");
+  }catch(e){ setSync("err","連線失敗（請檢查設定）"); console.error(e); }
+  render();
+
+  sb.channel("checkins-live")
+    .on("postgres_changes",{event:"*",schema:"public",table:"checkins"},payload=>{
+      if(payload.eventType==="DELETE") delete arrived[payload.old.guest_key];
+      else arrived[payload.new.guest_key]=payload.new.arrived;
+      render();
+    })
+    .subscribe(status=>{
+      if(status==="SUBSCRIBED") setSync("on","即時同步中");
+      else if(status==="CHANNEL_ERROR") setSync("err","同步中斷");
+    });
+}
+
+function setSync(cls,txt){syncDot.className="dot "+cls;syncText.textContent=txt;}
+function got(g){ return arrived[g.key]||0; }
+
+function tableList(){
+  const map={};
+  GUESTS.forEach(g=>{
+    if(!map[g.table])map[g.table]={no:g.table,name:g.tableName,total:0,here:0};
+    map[g.table].total+=g.party;
+    map[g.table].here+=Math.min(got(g),g.party);
+  });
+  return Object.values(map).sort((a,b)=>a.no-b.no);
+}
+
+function updateDashboard(){
+  const totalHeads=GUESTS.reduce((s,g)=>s+g.party,0);
+  const heads=GUESTS.reduce((s,g)=>s+Math.min(got(g),g.party),0);
+  const parties=GUESTS.filter(g=>got(g)>0).length;
+  const tables=tableList();
+  const full=tables.filter(t=>t.here>=t.total).length;
+  const rate=totalHeads?Math.round(heads/totalHeads*100):0;
+  $("#statRate").textContent=rate; $("#rateBar").style.width=rate+"%";
+  $("#statHeads").textContent=heads; $("#statTotalHeads").textContent=totalHeads;
+  $("#statParties").textContent=parties; $("#statTotalParties").textContent=GUESTS.length;
+  $("#statFull").textContent=full; $("#statTables").textContent=tables.length;
+}
+
+function renderGuests(){
+  const q=query.trim();
+  if(!q){
+    results.innerHTML='<div class="empty">請在上方輸入賓客姓名或桌號進行報到。<br>（為保護隱私，名單預設隱藏）</div>';
+    return;
+  }
+  let list=GUESTS.filter(g=>g.name.includes(q)||String(g.table)===q||g.tableName.includes(q));
+  // 依桌號固定排序,不隨報到狀態重排,避免按加減時卡片跳動
+  list.sort((a,b)=> a.table-b.table || a.name.localeCompare(b.name,'zh-Hant'));
+  if(list.length===0){results.innerHTML='<div class="empty">找不到符合「'+q+'」的賓客，請確認姓名或桌號。</div>';return;}
+  results.innerHTML=list.map(g=>{
+    const n=got(g), full=n>=g.party, cls=full?'done':(n>0?'partial':'');
+    let actionHtml;
+    if(g.party===1){
+      actionHtml = full
+        ? `<span class="badge-done">✓ 已報到</span><button class="btn btn-undo" onclick="setArrived('${g.key}',0)">取消</button>`
+        : `<button class="btn btn-checkin" onclick="setArrived('${g.key}',1)">報到</button>`;
+    }else{
+      actionHtml = `<div class="counter">
+        <button onclick="bump('${g.key}',-1)" ${n<=0?'disabled':''}>−</button>
+        <span class="cval"><b>${n}</b> / ${g.party}</span>
+        <button onclick="bump('${g.key}',1)" ${n>=g.party?'disabled':''}>+</button>
+      </div>
+      ${n<g.party?`<button class="btn btn-all" onclick="setArrived('${g.key}',${g.party})">全到</button>`:''}`;
+    }
+    const arrLine = g.party>1 ? `<div class="g-arrived">已到 <span class="n">${n}</span> / ${g.party} 人</div>` : '';
+    return `<div class="guest ${cls}">
+      <div class="g-table">${g.table}</div>
+      <div class="g-info">
+        <div class="g-name">${g.name}</div>
+        ${g.dupName?`<div class="g-dup">⚠ 另有同名賓客，請確認桌號</div>`:''}
+        <div class="g-meta">${g.tableName} · <span class="party">${g.party} 位</span></div>
+        ${arrLine}
+      </div>
+      <div class="g-action">${actionHtml}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderTables(){
+  let tables=tableList();
+  if(showOnlyUnfull) tables=tables.filter(t=>t.here<t.total);
+  if(tables.length===0){tablesEl.innerHTML='<div class="empty">所有桌次皆已到齊 🎉</div>';return;}
+  tablesEl.innerHTML=tables.map(t=>{
+    const pct=t.total?Math.round(t.here/t.total*100):0, full=t.here>=t.total;
+    return `<div class="tcard ${full?'full':''}"><div class="tno">第 ${t.no} 桌</div><div class="tname">${t.name}</div><div class="tcount">${t.here}<small> / ${t.total} 人</small></div><div class="tbar"><div style="width:${pct}%"></div></div></div>`;
+  }).join("");
+}
+
+function render(){updateDashboard();renderGuests();renderTables();renderRoster();}
+
+// ── 全部名單總覽(給主人家檢查用) ──
+const rosterHead=$("#rosterHead"), rosterBody=$("#rosterBody"), rosterList=$("#rosterList"), rosterCount=$("#rosterCount");
+rosterHead.addEventListener("click",()=>{
+  rosterOpen=!rosterOpen;
+  rosterBody.style.display=rosterOpen?"block":"none";
+  rosterHead.classList.toggle("open",rosterOpen);
+  rosterHead.querySelector(".chev").textContent = rosterOpen? "▼ 收起" : "▼ 展開檢查";
+  if(rosterOpen) renderRoster();
+});
+document.querySelectorAll(".rfilter").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll(".rfilter").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  rosterFilter=b.dataset.rf;
+  renderRoster();
+}));
+function renderRoster(){
+  if(!rosterOpen) return;
+  let list=GUESTS.map(g=>g).sort((a,b)=> a.table-b.table || a.name.localeCompare(b.name,'zh-Hant'));
+  const stat=g=>{const n=got(g);return n>=g.party?"done":(n>0?"partial":"none");};
+  if(rosterFilter==="none") list=list.filter(g=>stat(g)==="none"||stat(g)==="partial");
+  else if(rosterFilter==="done") list=list.filter(g=>stat(g)==="done");
+  const notDone=GUESTS.filter(g=>got(g)<g.party).length;
+  rosterCount.textContent = `未完成報到 ${notDone} 組 · 共 ${GUESTS.length} 組`;
+  if(list.length===0){rosterList.innerHTML='<div class="empty">此分類目前沒有賓客。</div>';return;}
+  rosterList.innerHTML=list.map(g=>{
+    const n=got(g), s=stat(g);
+    const cls=s==="done"?"done":(s==="partial"?"partial":"");
+    let label,scls;
+    if(s==="done"){label="✓ 已到";scls="s-done";}
+    else if(s==="partial"){label=`${n}/${g.party} 部分`;scls="s-part";}
+    else{label="未到";scls="s-none";}
+    const partyTxt = g.party>1?` (${g.party}人)`:"";
+    return `<div class="rrow ${cls}"><div class="rt">${g.table}</div><div class="rn">${g.name}${partyTxt}<span class="rtn">${g.tableName}</span></div><div class="rstat ${scls}">${label}</div></div>`;
+  }).join("");
+}
+
+
+function bump(key,delta){
+  const g=GUESTS.find(x=>x.key===key);
+  const next=Math.max(0,Math.min(g.party,(arrived[key]||0)+delta));
+  setArrived(key,next);
+}
+
+async function setArrived(key,val){
+  const g=GUESTS.find(x=>x.key===key);
+  const prev=arrived[key]||0;
+  if(val===prev) return;
+  arrived[key]=val; render();  // 樂觀更新
+  try{
+    if(val<=0){
+      const {error}=await sb.from("checkins").delete().eq("guest_key",key);
+      if(error) throw error;
+    }else{
+      const {error}=await sb.from("checkins").upsert(
+        {guest_key:key,name:g.name,table_no:g.table,party:g.party,arrived:val},
+        {onConflict:"guest_key"}
+      );
+      if(error) throw error;
+      if(val>=g.party) showToast(`<b>${g.name}</b> 全數報到 · 第 ${g.table} 桌 · ${g.party} 位`);
+      else showToast(`<b>${g.name}</b> 已到 ${val} / ${g.party} 人 · 第 ${g.table} 桌`);
+    }
+  }catch(e){ arrived[key]=prev; render(); showToast("⚠️ 同步失敗，請重試"); console.error(e); }
+}
+window.setArrived=setArrived; window.bump=bump;
+
+function showToast(html){toast.innerHTML=html;toast.classList.add("show");clearTimeout(showToast._t);showToast._t=setTimeout(()=>toast.classList.remove("show"),2200);}
+
+$("#search").addEventListener("input",e=>{query=e.target.value;renderGuests();});
+$("#toggleFull").addEventListener("click",e=>{showOnlyUnfull=!showOnlyUnfull;e.target.textContent=showOnlyUnfull?"顯示全部桌次":"只看未滿桌";renderTables();});
+</script>
+</body>
+</html>
