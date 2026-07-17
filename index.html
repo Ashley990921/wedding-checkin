@@ -52,6 +52,8 @@
   .g-meta{font-size:13px;color:var(--muted);margin-top:1px}
   .g-meta .party{color:var(--rose);font-weight:600}
   .g-dup{font-size:12px;color:#b26a00;font-weight:600;margin-top:1px}
+  .cn-badge{display:inline-block;font-size:12px;font-weight:600;color:#a8443a;background:#f7e0dc;border:1px solid #eec7c1;border-radius:6px;padding:1px 7px;margin-left:8px;vertical-align:middle}
+  .r-cn{color:#a8443a;font-size:12px;font-weight:600;margin-left:6px}
   .g-arrived{font-size:13px;margin-top:2px;font-weight:600}
   .g-arrived .n{color:var(--green)}
   /* 單人組:一顆按鈕 */
@@ -207,28 +209,28 @@ const GUESTS = [
   {name:"廖林瑞璧", table:1, tableName:"主桌", party:1},
   {name:"廖君毅", table:1, tableName:"主桌", party:1},
   {name:"廖尚諄", table:1, tableName:"主桌", party:1},
-  {name:"謝余日娥", table:2, tableName:"新娘親友", party:2},
-  {name:"余正秋", table:2, tableName:"新娘親友", party:1},
-  {name:"余金龍", table:2, tableName:"新娘親友", party:1},
-  {name:"余錢", table:2, tableName:"新娘親友", party:1},
-  {name:"吳嘉惠", table:2, tableName:"新娘親友", party:1},
-  {name:"黃進生", table:2, tableName:"新娘親友", party:2},
+  {name:"謝余日娥", table:2, tableName:"新娘親友", party:2, cn:1},
+  {name:"余正秋", table:2, tableName:"新娘親友", party:1, cn:1},
+  {name:"余金龍", table:2, tableName:"新娘親友", party:1, cn:1},
+  {name:"余錢", table:2, tableName:"新娘親友", party:1, cn:1},
+  {name:"吳嘉惠", table:2, tableName:"新娘親友", party:1, cn:1},
+  {name:"黃進生", table:2, tableName:"新娘親友", party:2, cn:1},
   {name:"曹令怡", table:2, tableName:"新娘親友", party:1},
   {name:"方國誠", table:2, tableName:"新娘親友", party:1},
-  {name:"胡月秋", table:3, tableName:"姓胡一家人", party:1},
-  {name:"張杏敏", table:3, tableName:"姓胡一家人", party:2},
-  {name:"張文瑞", table:3, tableName:"姓胡一家人", party:4},
-  {name:"胡權", table:3, tableName:"姓胡一家人", party:2},
-  {name:"胡月李", table:3, tableName:"姓胡一家人", party:1},
-  {name:"張文祥", table:5, tableName:"姓胡一家人", party:4},
-  {name:"胡麗淑", table:5, tableName:"姓胡一家人", party:3},
-  {name:"胡麗玉", table:5, tableName:"姓胡一家人", party:3},
-  {name:"李政澤", table:6, tableName:"新娘媽媽朋友", party:2},
-  {name:"黃佩玉", table:6, tableName:"新娘媽媽朋友", party:2},
-  {name:"賴美惠", table:6, tableName:"新娘媽媽朋友", party:1},
-  {name:"徐嵐", table:6, tableName:"新娘媽媽朋友", party:1},
-  {name:"彭美慧", table:6, tableName:"新娘媽媽朋友", party:2},
-  {name:"孫夢霞", table:6, tableName:"新娘媽媽朋友", party:1},
+  {name:"胡月秋", table:3, tableName:"姓胡一家人", party:1, cn:1},
+  {name:"張杏敏", table:3, tableName:"姓胡一家人", party:2, cn:1},
+  {name:"張文瑞", table:3, tableName:"姓胡一家人", party:4, cn:1},
+  {name:"胡權", table:3, tableName:"姓胡一家人", party:2, cn:1},
+  {name:"胡月李", table:3, tableName:"姓胡一家人", party:1, cn:1},
+  {name:"張文祥", table:5, tableName:"姓胡一家人", party:4, cn:1},
+  {name:"胡麗淑", table:5, tableName:"姓胡一家人", party:3, cn:1},
+  {name:"胡麗玉", table:5, tableName:"姓胡一家人", party:3, cn:1},
+  {name:"李政澤", table:6, tableName:"新娘媽媽朋友", party:2, cn:1},
+  {name:"黃佩玉", table:6, tableName:"新娘媽媽朋友", party:2, cn:1},
+  {name:"賴美惠", table:6, tableName:"新娘媽媽朋友", party:1, cn:1},
+  {name:"徐嵐", table:6, tableName:"新娘媽媽朋友", party:1, cn:1},
+  {name:"彭美慧", table:6, tableName:"新娘媽媽朋友", party:2, cn:1},
+  {name:"孫夢霞", table:6, tableName:"新娘媽媽朋友", party:1, cn:1},
   {name:"楊聯財", table:7, tableName:"新娘爸爸朋友", party:2},
   {name:"徐永義", table:7, tableName:"新娘爸爸朋友", party:2},
   {name:"吳怡樂", table:7, tableName:"新娘爸爸朋友", party:2},
@@ -341,11 +343,11 @@ const GUESTS = [
   {name:"葛虹", table:22, tableName:"正妹學霸群", party:1},
   {name:"賴妍安", table:22, tableName:"正妹學霸群", party:2},
   {name:"葉姝儀", table:22, tableName:"正妹學霸群", party:2},
-  {name:"曹侃若", table:23, tableName:"新娘家人", party:6},
+  {name:"曹侃若", table:23, tableName:"新娘家人", party:6, cn:1},
   {name:"曹慧嫻", table:23, tableName:"新娘家人", party:1},
   {name:"Maya", table:23, tableName:"新娘家人", party:1},
   {name:"Johnathon", table:23, tableName:"新娘家人", party:1},
-  {name:"王春洋", table:24, tableName:"新娘親友", party:7},
+  {name:"王春洋", table:24, tableName:"新娘親友", party:7, cn:1},
   {name:"鄭泊聲", table:24, tableName:"新娘親友", party:1},
   {name:"林慈慧", table:24, tableName:"新娘親友", party:1},
   {name:"廖家悅", table:25, tableName:"新郎親友", party:1},
@@ -546,7 +548,7 @@ function renderGuests(){
     return `<div class="guest ${cls}">
       <div class="g-table">${g.table}</div>
       <div class="g-info">
-        <div class="g-name">${g.name}</div>
+        <div class="g-name">${g.name}${g.cn?`<span class="cn-badge">＋中式 ✕1</span>`:``}</div>
         ${g.dupName?`<div class="g-dup">⚠ 另有同名賓客，請確認桌號</div>`:''}
         <div class="g-meta">${g.tableName} · <span class="party">${g.party} 位</span></div>
         ${arrLine}
@@ -600,7 +602,7 @@ function renderRoster(){
     else if(s==="partial"){label=`${n}/${g.party} 部分`;scls="s-part";}
     else{label="未到";scls="s-none";}
     const partyTxt = g.party>1?` (${g.party}人)`:"";
-    return `<div class="rrow ${cls}"><div class="rt">${g.table}</div><div class="rn">${g.name}${partyTxt}<span class="rtn">${g.tableName}</span></div><div class="rstat ${scls}">${label}</div></div>`;
+    return `<div class="rrow ${cls}"><div class="rt">${g.table}</div><div class="rn">${g.name}${partyTxt}${g.cn?`<span class="r-cn">＋中式✕1</span>`:``}<span class="rtn">${g.tableName}</span></div><div class="rstat ${scls}">${label}</div></div>`;
   }).join("");
 }
 
